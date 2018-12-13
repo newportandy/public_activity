@@ -26,23 +26,7 @@ module PublicActivity
           end
         end
 
-        # We defer this configuration until runtime to allow Rails to load this code without a database connection.
-        # #table_exists? forces the connection which is problematic in some cases, for example when we build a
-        # production docker image and want to precompile assets without a database connection.
-        def self.register_parameter_serialization
-          if table_exists?
-            serialize :parameters, Hash unless [:json, :jsonb, :hstore].include?(columns_hash['parameters'].type)
-          else
-            warn("[WARN] table #{name} doesn't exist. Skipping PublicActivity::Activity#parameters's serialization")
-          end
-        rescue ::ActiveRecord::NoDatabaseError
-          warn("[WARN] database doesn't exist. Skipping PublicActivity::Activity#parameters's serialization")
-        end
-
-        klass = self
-        ActiveSupport.on_load(:active_record) do
-          klass.register_parameter_serialization
-        end
+        serialize :parameters, Hash unless [:json, :jsonb, :hstore].include?(columns_hash['parameters'].type)
 
         if ::ActiveRecord::VERSION::MAJOR < 4 || defined?(ProtectedAttributes)
           attr_accessible :key, :owner, :parameters, :recipient, :trackable
